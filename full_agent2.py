@@ -8,9 +8,7 @@ import os
 load_dotenv()
 client = genai.Client()
 
-# -------------------------
-# Helper functions
-# -------------------------
+
 def get_response_text(response):
     """Safely extract text from a Gemini response."""
     if not response or not response.candidates:
@@ -34,9 +32,7 @@ def safe_json_loads(s: str):
         print("Raw string was:", s)
         return {}
 
-# -------------------------
-# Tooling
-# -------------------------
+
 def get_weather(city: str):
     url=f"http://wttr.in/{city}?format=%C+%t"
     response=requests.get(url)
@@ -48,12 +44,6 @@ def get_weather(city: str):
 def run_command(command):
     result=os.system(command=command)
     return result
-
-
-
-
-
-
 
 
 
@@ -69,9 +59,7 @@ available_tools = {
     }
 }
 
-# -------------------------
-# System prompt
-# -------------------------
+
 system_prompt = """
 You are a helpful AI assistant specialized in tool-using agents.
 You must always follow the reasoning steps: plan → action → observe → output.
@@ -105,17 +93,14 @@ Available tools:
 - run_command:  takes a command as input andperform the opeation 
 """
 
-# -------------------------
-# Conversation setup
-# -------------------------
+
+
 contents = [Content(role="user", parts=[Part(text=system_prompt)])]
 
 query = input("> ")
 contents.append(Content(role="user", parts=[Part(text=query)]))
 
-# -------------------------
-# Main loop
-# -------------------------
+
 while True:
     response = client.models.generate_content(
         model="gemini-2.5-flash",
@@ -125,7 +110,7 @@ while True:
     raw_text = get_response_text(response)
     print("DEBUG raw_text:", repr(raw_text))
 
-    # If Gemini answered with prose instead of JSON → retry
+   
     if not raw_text.strip().startswith("{"):
         # print("⚠️ Model returned prose instead of JSON. Re-prompting...")
         contents.append(Content(role="user", parts=[Part(text="Please respond ONLY with valid JSON according to the schema.")]))
@@ -136,12 +121,9 @@ while True:
         contents.append(Content(role="user", parts=[Part(text="Please respond with valid JSON only.")]))
         continue
 
-    # Save assistant reply into context
     contents.append(Content(role="model", parts=[Part(text=json.dumps(parsed_response))]))
 
-    # -------------------------
-    # Handle steps
-    # -------------------------
+
     step = parsed_response.get("step")
 
     if step == "plan":
